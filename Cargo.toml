@@ -20,10 +20,11 @@ st7735-lcd = "0.7"
 embedded-graphics = "0.6"
 embedded-graphics-core = "0.4"
 panic-semihosting = "0.5"
-tinybmp = "0.6.0"
-
-[build-dependencies]
-reqwest = { version = "0.11", features = ["blocking"] }
+tinybmp = "0.4.0"
+mipidsi = "0.8.0"
+display-interface-spi = "0.5.0"
+embedded-hal-bus = "0.2.0"
+embedded-hal-compat = "0.13.0"
 
 
 # Set the default for dependencies.

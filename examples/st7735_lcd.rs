@@ -12,7 +12,6 @@ use hal::hal::spi;
 use hal::prelude::*;
 use hal::stm32;
 use st7735_lcd::Orientation;
-use tinybmp::Bmp;
 
 #[entry]
 fn main() -> ! {
@@ -31,17 +30,16 @@ fn main() -> ! {
 
 
     // SPI4
-    let sck = gpioe.pe12.into_alternate_af5();
+    let sck = gpioe.pe12.into_alternate();
     let miso = hal::spi::NoMiso;
-    let mosi = gpioe.pe14.into_alternate_af5();
+    let mosi = gpioe.pe14.into_alternate();
 
-    let rst = gpioe.pe10.into_push_pull_output();
+    let _rst = gpioe.pe10.into_push_pull_output();
     let dc = gpioe.pe13.into_push_pull_output();
     let cs = gpioe.pe11.into_push_pull_output();
-
-    hprintln!("SPI");
+    
     // Initialise the SPI peripheral.
-    let mut spi = dp.SPI4.spi(
+    let spi = dp.SPI4.spi(
         (sck, miso, mosi),
         spi::MODE_0,
         3.MHz(),
@@ -51,26 +49,22 @@ fn main() -> ! {
     
     let mut delay = cp.SYST.delay(ccdr.clocks);
 
-    let mut disp = st7735_lcd::ST7735::new(spi, cs, dc, false, true, 80, 160);
-    hprintln!("display init");
-    disp.init(&mut delay).unwrap();
-    disp.set_orientation(&Orientation::LandscapeSwapped).unwrap();
-    hprintln!("display clear");
-    disp.clear(Rgb565::BLACK);
-
-    disp.set_offset(0, 25);
-
-    hprintln!("draw ferris");
+    let mut display = st7735_lcd::ST7735::new(spi, cs, dc, false, true, 80, 160);
+    display.init(&mut delay).unwrap();
+    display.set_orientation(&Orientation::LandscapeSwapped).unwrap();
+    display.clear(Rgb565::BLACK).expect("Unable to clear");
+    display.set_offset(0, 25);
+    
     // draw ferris
     let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("ferris.raw"), 86, 64);
     let image: Image<_, Rgb565> = Image::new(&image_raw, Point::new(34, 8));
-    image.draw(&mut disp).unwrap();
+    image.draw(&mut display).unwrap();
 
     //let ferris = Bmp::from_slice(include_bytes!("./ferris.bmp")).unwrap();
     //let ferris = Image::new(&ferris, Point::new(34, 8));
     //ferris.draw(&mut disp).unwrap();
     
-    hprintln!("lcd test have done.");
+    hprintln!("lcd test finished.");
     loop {
         cortex_m::asm::wfi(); // sleep infinitely
     }
