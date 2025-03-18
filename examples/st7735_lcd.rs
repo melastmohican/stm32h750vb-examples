@@ -34,9 +34,11 @@ fn main() -> ! {
     let miso = hal::spi::NoMiso;
     let mosi = gpioe.pe14.into_alternate();
 
-    let _rst = gpioe.pe10.into_push_pull_output();
+    let rst = gpioe.pe15.into_push_pull_output();
     let dc = gpioe.pe13.into_push_pull_output();
     let cs = gpioe.pe11.into_push_pull_output();
+    let mut bl = gpioe.pe10.into_push_pull_output();
+    bl.set_high();
     
     // Initialise the SPI peripheral.
     let spi = dp.SPI4.spi(
@@ -49,7 +51,7 @@ fn main() -> ! {
     
     let mut delay = cp.SYST.delay(ccdr.clocks);
 
-    let mut display = st7735_lcd::ST7735::new(spi, cs, dc, false, true, 80, 160);
+    let mut display = st7735_lcd::ST7735::new(spi, dc, rst, false, true, 80, 160);
     display.init(&mut delay).unwrap();
     display.set_orientation(&Orientation::LandscapeSwapped).unwrap();
     display.clear(Rgb565::BLACK).expect("Unable to clear");

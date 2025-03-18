@@ -4,9 +4,9 @@
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 use display_interface_spi::SPIInterface;
-use embedded_graphics::drawable::Drawable;
 use embedded_graphics::geometry::Point;
 use embedded_graphics::image::{Image, ImageRaw};
+use embedded_graphics::prelude::Drawable;
 use embedded_graphics_core::draw_target::DrawTarget;
 use embedded_graphics_core::pixelcolor::Rgb565;
 use embedded_graphics_core::prelude::RgbColor;
@@ -72,7 +72,7 @@ fn main() -> ! {
     hprintln!("draw ferris");
     // draw ferris
     let image_raw = ImageRaw::new(include_bytes!("ferris.raw"), 86, 64);
-    let image = Image::new(&image_raw, Point::zero());
+    let image = Image::new(&image_raw, Point::new(34, 8));
     image.draw(&mut display).unwrap();
 
     /*let ferris = Bmp::from_slice(include_bytes!("./ferris.bmp")).unwrap();
