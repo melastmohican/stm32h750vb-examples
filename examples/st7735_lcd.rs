@@ -7,11 +7,52 @@ use cortex_m_semihosting::hprintln;
 use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
 use embedded_graphics::prelude::*;
 use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
+use embedded_hal_bus::spi::ExclusiveDevice;
+use embedded_hal_compat::eh1_0::delay::DelayNs;
+use embedded_hal_compat::eh1_0::digital::OutputPin;
+use embedded_hal_compat::ForwardCompat;
 use stm32h7xx_hal::{self as hal};
 use hal::hal::spi;
 use hal::prelude::*;
 use hal::stm32;
-use st7735_lcd::Orientation;
+use st7735_lcd::{Orientation, ST7735};
+use stm32h7xx_hal::spi::NoMiso;
+use tinybmp::Bmp;
+
+struct Led<P: OutputPin> {
+    pin: P,
+    brightness: u8, // Duty cycle (0-10)
+}
+
+impl<P: OutputPin> Led<P> {
+    pub fn new(pin: P) -> Self {
+        Self {
+            pin,
+            brightness: 5, // Default 50% duty cycle
+        }
+    }
+
+    pub fn set_brightness(&mut self, value: u8) {
+        if value <= 10 {
+            self.brightness = value;
+        }
+    }
+
+    pub fn update<DELAY>(&mut self, delay: &mut DELAY)
+    where
+        DELAY: DelayNs,
+    {
+
+        for count in 0..10 {
+            if count < self.brightness {
+                self.pin.set_high().ok();
+            } else {
+                self.pin.set_low().ok();
+            }
+            delay.delay_ms(1); // Adjust for timing
+        }
+    }
+}
 
 #[entry]
 fn main() -> ! {
@@ -31,40 +72,43 @@ fn main() -> ! {
 
     // SPI4
     let sck = gpioe.pe12.into_alternate();
-    let miso = hal::spi::NoMiso;
     let mosi = gpioe.pe14.into_alternate();
 
-    let rst = gpioe.pe15.into_push_pull_output();
-    let dc = gpioe.pe13.into_push_pull_output();
-    let cs = gpioe.pe11.into_push_pull_output();
-    let mut bl = gpioe.pe10.into_push_pull_output();
-    bl.set_high();
-    
+    let mut rst = gpioe.pe15.into_push_pull_output().forward();
+    let mut dc = gpioe.pe13.into_push_pull_output().forward();
+    let mut cs = gpioe.pe11.into_push_pull_output().forward();
+    let mut led = Led::new(gpioe.pe10.into_push_pull_output().forward());
+   
     // Initialise the SPI peripheral.
     let spi = dp.SPI4.spi(
-        (sck, miso, mosi),
+        (sck, NoMiso, mosi),
         spi::MODE_0,
         3.MHz(),
         ccdr.peripheral.SPI4,
         &ccdr.clocks,
-    );
+    ).forward();
     
-    let mut delay = cp.SYST.delay(ccdr.clocks);
+    //let mut delay = cp.SYST.delay(ccdr.clocks);
+    let mut delay = cortex_m::delay::Delay::new(cp.SYST, ccdr.clocks.sysclk().raw()).forward();
+    led.update(&mut delay);
 
-    let mut display = st7735_lcd::ST7735::new(spi, dc, rst, false, true, 80, 160);
+    let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();
+
+    let mut display = ST7735::<_, _, _>::new(spi_dev, dc, rst, false, true, 160,80);
     display.init(&mut delay).unwrap();
+    display.set_offset(1, 26);
     display.set_orientation(&Orientation::LandscapeSwapped).unwrap();
     display.clear(Rgb565::BLACK).expect("Unable to clear");
-    display.set_offset(0, 25);
+    
     
     // draw ferris
-    let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("ferris.raw"), 86, 64);
-    let image: Image<_, Rgb565> = Image::new(&image_raw, Point::new(34, 8));
+    let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("ferris.raw"), 86);
+    let image: Image<_> = Image::new(&image_raw, Point::new(80, 8));
     image.draw(&mut display).unwrap();
-
-    //let ferris = Bmp::from_slice(include_bytes!("./ferris.bmp")).unwrap();
-    //let ferris = Image::new(&ferris, Point::new(34, 8));
-    //ferris.draw(&mut disp).unwrap();
+    // draw rust logo
+    let logo = Bmp::from_slice(include_bytes!("rust.bmp")).unwrap();
+    let logo = Image::new(&logo, Point::new(0, 0));
+    logo.draw(&mut display).unwrap();
     
     hprintln!("lcd test finished.");
     loop {
