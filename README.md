@@ -69,6 +69,19 @@ The system is now streaming stable, color-accurate video at ~15 FPS. Video feed 
 cargo run --example ov2640_lcd
 ```
 
+#### mipidsi
+
+Demonstrates advanced ST7735 driver usage via the `mipidsi` crate, including custom rotation and color inversion.
+
+```bash
+cargo run --example mipidsi
+```
+
+**Hardware:**
+
+- Display: ST7735 (160x80)
+- Driver: `mipidsi` crate
+
 ## Implementation Architecture
 
 ### 1. Memory Coherency (MPU & SRAM4)
@@ -166,7 +179,5 @@ Special build profiles are used to ensure the binaries fit in the 128KB internal
 - [Arduino WeActMiniH7xx Variant](https://github.com/stm32duino/Arduino_Core_STM32/blob/main/variants/STM32H7xx/H742V(G-I)(H-T)_H743V(G-I)(H-T)_H750VBT_H753VI(H-T)/variant_WeActMiniH7xx.h)
 - [Zephyr Mini STM32H7B0 Documentation](https://docs.zephyrproject.org/latest/boards/weact/mini_stm32h7b0/doc/index.html)
 - [Zephyr OV2640 Module Documentation](https://docs.zephyrproject.org/latest/boards/shields/weact_ov2640_cam_module/doc/index.html)
-- [Zephyr Mini STM32H7B0 Documentation](https://github.com/zephyrproject-rtos/zephyr/blob/main//boards/weact/mini_stm32h7b0/doc/index.rst)
-- [Zephyr Mini STM32H7B0 Documentation](https://docs.nordicsemi.com/bundle/ncs-3.2.4/page/zephyr/boards/weact/mini_stm32h7b0/doc/index.html)
 - [NuttX WeAct STM32H743 Documentation](https://nuttx.apache.org/docs/latest/platforms/arm/stm32h7/boards/weact-stm32h743/index.html)
 - [OV2640 Datasheet](https://www.uctronics.com/download/cam_module/OV2640DS.pdf)
