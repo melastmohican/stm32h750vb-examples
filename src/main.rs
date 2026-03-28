@@ -2,9 +2,9 @@
 #![no_main]
 #![no_std]
 
-use panic_probe as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
+use panic_probe as _;
 use stm32h7xx_hal::{pac, prelude::*};
 
 #[entry]

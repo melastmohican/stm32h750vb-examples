@@ -39,6 +39,15 @@ SECTIONS {
     *(.axisram .axisram.*);
     . = ALIGN(8);
     } > AXISRAM
+  .sram1 (NOLOAD) : ALIGN(32) {
+    *(.sram1 .sram1.*);
+    . = ALIGN(32);
+    } > SRAM1
+  .sram2 (NOLOAD) : ALIGN(32) {
+    . = ALIGN(32);
+    *(.sram2 .sram2.*);
+    . = ALIGN(32);
+    } > SRAM2
   /* The SRAM1 and SRAM2 section are commonly used as the stack and heap for the
      CM4 core in dualcore versions and should thus not be used in examples*/
   .sram3 (NOLOAD) : ALIGN(4) {

@@ -1,3 +1,20 @@
+//! ## Mipi-DSI (SPI) LCD Example
+//!
+//! ### Wiring (WeAct MiniSTM32H750VB + ST7735):
+//! | Peripheral Pin | STM32 Pin | Note |
+//! | :--- | :--- | :--- |
+//! | **SPI SCK** | PE12 (SPI4) | LCD Clock |
+//! | **SPI MOSI** | PE14 (SPI4) | LCD Data |
+//! | **LCD CS** | PE11 | Chip Select |
+//! | **LCD RS/DC** | PE13 | Data/Command |
+//! | **LCD RST** | PE15 | Reset |
+//! | **LCD BL** | PE10 | Backlight (Active LOW) |
+//!
+//! ### Implementation Details:
+//! 1. **mipidsi Crate**: Demonstrates advanced ST7735 driver usage with Mipi-DSI.
+//! 2. **SPI4 Peripheral**: Configured for high-speed operation on Port E.
+//! 3. **LED Backlight**: PE10 is Active LOW (LOW = ON).
+
 #![no_std]
 #![no_main]
 
@@ -15,12 +32,12 @@ use embedded_hal_compat::eh1_0::delay::DelayNs;
 use embedded_hal_compat::eh1_0::digital::OutputPin;
 use embedded_hal_compat::ForwardCompat;
 use mipidsi::models::ST7735s;
+use mipidsi::options::ColorInversion::Inverted;
 use mipidsi::options::{ColorOrder, Orientation, Rotation};
 use mipidsi::Builder;
-use mipidsi::options::ColorInversion::Inverted;
+use panic_probe as _;
 use stm32h7xx_hal::{self as hal, hal::spi, prelude::*, stm32};
 use tinybmp::Bmp;
-use panic_probe as _;
 
 struct Led<P: OutputPin> {
     pin: P,
@@ -35,17 +52,18 @@ impl<P: OutputPin> Led<P> {
         }
     }
 
+    /*
     pub fn set_brightness(&mut self, value: u8) {
         if value <= 10 {
             self.brightness = value;
         }
     }
+    */
 
     pub fn update<DELAY>(&mut self, delay: &mut DELAY)
     where
         DELAY: DelayNs,
     {
-
         for count in 0..10 {
             if count < self.brightness {
                 self.pin.set_high().ok();
@@ -107,7 +125,8 @@ fn main() -> ! {
         .color_order(ColorOrder::Bgr)
         .orientation(Orientation::new().rotate(Rotation::Deg270))
         .invert_colors(Inverted)
-        .display_size(160, 80)
+        .display_size(80, 160)
+        .display_offset(26, 1)
         .init(&mut delay)
         .unwrap();
 
@@ -116,7 +135,7 @@ fn main() -> ! {
     hprintln!("draw ferris");
     // draw ferris
     let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("ferris.raw"), 86);
-    let image: Image<_> = Image::new(&image_raw, Point::new(34, 8));
+    let image: Image<_> = Image::new(&image_raw, Point::new(80, 8));
     image.draw(&mut display).unwrap();
     hprintln!("draw bitmpap");
     let raw_image: Bmp<Rgb565> = Bmp::from_slice(include_bytes!("rust.bmp")).unwrap();
