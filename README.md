@@ -58,6 +58,20 @@ cargo run --example blinky_random
 - LED: PE3
 - MCU: STM32H750VBT6
 
+#### i2c_scan
+
+Scans the **I2C1** bus (PB8/PB9) for connected devices. It iterates through all 7-bit addresses (0x01-0x7F) and reports any ACKs via semihosting.
+
+```bash
+cargo run --example i2c_scan
+```
+
+**Hardware:**
+
+- Peripheral: I2C1 (Internal/Extension)
+- Pins: PB8 (SCL), PB9 (SDA)
+- MCU: STM32H750VBT6
+
 ---
 
 ### Analog Peripheral Examples
