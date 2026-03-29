@@ -150,6 +150,61 @@ cargo run --example sdmmc
 - Driver: `embedded-sdmmc` crate
 - Storage: MicroSD Card
 
+---
+
+### USB Serial Examples
+
+These examples implement USB CDC-ACM (Serial) communication using the onboard **USB-C** connector. They use the **USB2 (OTG2_HS)** peripheral mapped to **PA11/PA12**.
+
+#### usb_serial
+
+A basic polling-based USB echo server.
+
+```bash
+cargo run --example usb_serial
+```
+
+#### usb_rtic_serial
+
+An interrupt-driven USB echo server built with the **RTIC** framework. It uses an idle-polling pattern for maximum reliability on the H750VB.
+
+```bash
+cargo run --example usb_rtic_serial
+```
+
+#### usb_serial_lcd (Terminal)
+
+A combined example that takes incoming USB serial data and renders it as a scrolling terminal on the **ST7735 LCD**.
+
+```bash
+cargo run --example usb_serial_lcd
+```
+
+**Testing Instructions (macOS):**
+
+1. Connect the board via USB-C.
+2. Find the device path: `ls /dev/cu.usbmodem*`
+3. Connect using `screen` or `tio`:
+   ```bash
+   # Using screen
+   screen /dev/cu.usbmodemSN123451 115200
+
+   # Using tio (recommended)
+   tio /dev/cu.usbmodemSN123451
+   ```
+
+4. Type characters to see them echoed back (in uppercase).
+5. For `usb_serial_lcd`, typed characters will appear on the physical display.
+
+6. **How to exit**:
+   - For `screen`: Press `Ctrl+A` then `K`.
+   - For `tio`: Press `Ctrl+T` then `Q`.
+
+**Hardware:**
+- Peripheral: USB2 (OTG2_HS)
+- Pins: PA11 (DM), PA12 (DP)
+- LCD (Optional): SPI4 (PE11-PE15)
+
 ## Implementation Architecture
 
 ### 1. Memory Coherency (MPU & SRAM4)
@@ -245,6 +300,18 @@ The `sdmmc` example uses the onboard MicroSD slot connected to **SDMMC1**:
 | D3     | PC11          | Data 3 (AF12)  |
 | CMD    | PD2           | Command (AF12) |
 | CK     | PC12          | Clock (AF12)   |
+
+### USB Wiring (OTG2_HS)
+
+The USB-C connector is wired directly to the following pins:
+
+| Signal | STM32H750 Pin | Alternate Function |
+| :----- | :------------ | :----------------- |
+| USB_DM | PA11          | AF10               |
+| USB_DP | PA12          | AF10               |
+
+> [!IMPORTANT]
+> The internal 3.3V USB regulator (`usb33den`) and HSI48 clock must be enabled for these pins to function as a USB device.
 
 ## Build Configuration
 

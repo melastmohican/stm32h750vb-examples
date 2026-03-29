@@ -3,7 +3,7 @@
 #![no_std]
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use panic_probe as _;
 use stm32h7xx_hal::{pac, prelude::*};
 
@@ -13,16 +13,16 @@ fn main() -> ! {
     let dp = pac::Peripherals::take().unwrap();
 
     // Constrain and Freeze power
-    hprintln!("Setup PWR...                  ");
+    defmt::info!("Setup PWR...                  ");
     let pwr = dp.PWR.constrain();
     let pwrcfg = pwr.freeze();
 
     // Constrain and Freeze clock
-    hprintln!("Setup RCC...                  ");
+    defmt::info!("Setup RCC...                  ");
     let rcc = dp.RCC.constrain();
     let ccdr = rcc.sys_ck(100.MHz()).freeze(pwrcfg, &dp.SYSCFG);
 
-    hprintln!("stm32h7xx-hal example - Blinky");
+    defmt::info!("stm32h7xx-hal example - Blinky");
 
     let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
 

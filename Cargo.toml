@@ -10,9 +10,11 @@ cortex-m-rt = "0.7"
 defmt = "0.3"
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3.2", features = ["print-defmt"] }
+usb-device = "0.3.2"
+usbd-serial = "0.2.2"
 embedded-hal = "1.0.0"
 embedded-hal-02 = { version = "0.2.7", package = "embedded-hal" }
-stm32h7xx-hal = { version = "0.16.0", features = ["stm32h750v", "sdmmc", "embedded-sdmmc", "sdmmc-fatfs"] }
+stm32h7xx-hal = { version = "0.16.0", features = ["stm32h750v", "sdmmc", "embedded-sdmmc", "sdmmc-fatfs", "usb_hs"] }
 cortex-m-rtic = "1.1"
 
 [dev-dependencies]
