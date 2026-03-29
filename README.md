@@ -42,6 +42,24 @@ cargo run
 
 ---
 
+### Analog Peripheral Examples
+
+#### mcutemp
+
+Combines the internal temperature sensor (**ADC3**) with the onboard **ST7735 LCD** (via SPI4 and `mipidsi`). It renders the live temperature value in white text on a black background, updating every second.
+
+```bash
+cargo run --example mcutemp
+```
+
+**Hardware:**
+
+- Peripheral: ADC3 (Internal) + SPI4 (LCD)
+- MCU: STM32H750VBT6
+- Display: ST7735 (160x80)
+
+---
+
 ### SPI Display Examples
 
 These examples use the **SPI4** peripheral on `GPIOE` to drive small TFT displays. Due to the limited 128KB internal FLASH, these examples are optimized for size.
