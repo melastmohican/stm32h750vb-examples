@@ -82,6 +82,24 @@ cargo run --example mipidsi
 - Display: ST7735 (160x80)
 - Driver: `mipidsi` crate
 
+---
+
+### Storage Examples
+
+#### sdmmc
+
+Demonstrates initialization of the onboard MicroSD card reader using the SDMMC1 peripheral. It performs a raw block verification followed by a FAT filesystem test (listing the directory and writing a file).
+
+```bash
+cargo run --example sdmmc
+```
+
+**Hardware:**
+
+- Peripheral: SDMMC1 (4-bit mode)
+- Driver: `embedded-sdmmc` crate
+- Storage: MicroSD Card
+
 ## Implementation Architecture
 
 ### 1. Memory Coherency (MPU & SRAM4)
@@ -164,6 +182,19 @@ The `ov2640_lcd` example uses the following DCMI/I2C/Clock mapping:
 | D1            | PC7           | DCMI Data 1                 |
 | D0            | PC6           | DCMI Data 0                 |
 | RESET / PWDN  | PA7           | Shared Power Control (Opt.) |
+
+### Storage Wiring (MicroSD)
+
+The `sdmmc` example uses the onboard MicroSD slot connected to **SDMMC1**:
+
+| Signal | STM32H750 Pin | Description    |
+| :----- | :------------ | :------------- |
+| D0     | PC8           | Data 0 (AF12)  |
+| D1     | PC9           | Data 1 (AF12)  |
+| D2     | PC10          | Data 2 (AF12)  |
+| D3     | PC11          | Data 3 (AF12)  |
+| CMD    | PD2           | Command (AF12) |
+| CK     | PC12          | Clock (AF12)   |
 
 ## Build Configuration
 
