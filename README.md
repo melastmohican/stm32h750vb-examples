@@ -42,6 +42,24 @@ cargo run
 
 ---
 
+### Low-Level Peripheral Examples
+
+#### blinky_random
+
+Uses the MCU's internal hardware **Random Number Generator (RNG)** to toggle the onboard LED at irregular intervals (50ms - 500ms).
+
+```bash
+cargo run --example blinky_random
+```
+
+**Hardware:**
+
+- Peripheral: RNG (True Random Source)
+- LED: PE3
+- MCU: STM32H750VBT6
+
+---
+
 ### Analog Peripheral Examples
 
 #### mcutemp
