@@ -20,7 +20,7 @@ use panic_probe as _;
 
 use core::fmt::Write;
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embedded_graphics::mono_font::{iso_8859_1::FONT_10X20, MonoTextStyle, MonoTextStyleBuilder};
 use embedded_graphics::pixelcolor::Rgb565;
@@ -104,7 +104,7 @@ fn main() -> ! {
         .pll2_p_ck(4.MHz())
         .freeze(pwrcfg, &dp.SYSCFG);
 
-    hprintln!("Temperature LCD Example Started");
+    defmt::info!("Temperature LCD Example Started");
 
     // --- ADC3 Initialization ---
     // Create HAL delay once (consumes SYST)
@@ -171,7 +171,7 @@ fn main() -> ! {
         .draw(&mut display)
         .unwrap();
 
-    hprintln!("Displaying temperature on LCD...");
+    defmt::info!("Displaying temperature on LCD...");
 
     // Get raw clocks for loop delay
     let sys_freq = ccdr.clocks.sysclk().raw();
@@ -188,8 +188,8 @@ fn main() -> ! {
         let mut buf = StringBuf::new();
         write!(buf, "{:.1} \u{00B0}C", temperature).ok();
 
-        // Output to semihosting
-        hprintln!("Temp: {:.1} \u{00B0}C", temperature);
+        // Output to defmt (no float support, using integer part)
+        defmt::info!("Temp: {} C", temperature as i32);
 
         // Update LCD Area
         // Overwrite background by drawing the text with a background color in the style

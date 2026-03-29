@@ -19,7 +19,7 @@ use cortex_m::interrupt::Mutex;
 use panic_probe as _;
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use stm32h7xx_hal::gpio::gpioc::PC13;
 use stm32h7xx_hal::gpio::gpioe::PE3;
 use stm32h7xx_hal::gpio::{Edge, ExtiPin, Input, Output, PushPull};
@@ -67,7 +67,7 @@ fn main() -> ! {
         cortex_m::peripheral::NVIC::unmask(pac::Interrupt::EXTI15_10);
     }
 
-    hprintln!("Button Int Ready. Press K1!");
+    defmt::info!("Button Int Ready. Press K1!");
 
     loop {
         cortex_m::asm::wfi();

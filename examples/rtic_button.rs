@@ -18,7 +18,7 @@ use panic_probe as _;
 
 #[rtic::app(device = stm32h7xx_hal::pac, peripherals = true)]
 mod app {
-    use cortex_m_semihosting::hprintln;
+    use defmt_rtt as _;
     use stm32h7xx_hal::gpio::gpioc::PC13;
     use stm32h7xx_hal::gpio::gpioe::PE3;
     use stm32h7xx_hal::gpio::{Edge, ExtiPin, Input, Output, PushPull};
@@ -58,7 +58,7 @@ mod app {
         button.clear_interrupt_pending_bit();
         button.enable_interrupt(&mut ctx.device.EXTI);
 
-        hprintln!("RTIC Button Ready. Press K1!");
+        defmt::info!("RTIC Button Ready. Press K1!");
 
         (Shared {}, Local { button, led }, init::Monotonics())
     }

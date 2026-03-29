@@ -19,7 +19,7 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embedded_graphics::geometry::Point;
 use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
@@ -132,12 +132,12 @@ fn main() -> ! {
 
     display.clear(Rgb565::BLACK).unwrap();
 
-    hprintln!("draw ferris");
+    defmt::info!("draw ferris");
     // draw ferris
     let image_raw: ImageRawLE<Rgb565> = ImageRaw::new(include_bytes!("ferris.raw"), 86);
     let image: Image<_> = Image::new(&image_raw, Point::new(80, 8));
     image.draw(&mut display).unwrap();
-    hprintln!("draw bitmpap");
+    defmt::info!("draw bitmpap");
     let raw_image: Bmp<Rgb565> = Bmp::from_slice(include_bytes!("rust.bmp")).unwrap();
     let image = Image::new(&raw_image, Point::new(0, 0));
     image.draw(&mut display).unwrap();

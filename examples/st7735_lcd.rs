@@ -19,7 +19,7 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
 use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
 use embedded_graphics::prelude::*;
@@ -131,7 +131,7 @@ fn main() -> ! {
     let logo = Image::new(&logo, Point::new(0, 0));
     logo.draw(&mut display).unwrap();
 
-    hprintln!("lcd test finished.");
+    defmt::info!("lcd test finished.");
     loop {
         cortex_m::asm::wfi(); // sleep infinitely
     }

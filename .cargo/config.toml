@@ -4,7 +4,7 @@ runner = "probe-rs run --chip STM32H750VBTx"
 rustflags = [
   # LLD (shipped with the Rust toolchain) is used as the default linker
   "-C", "link-arg=-Tlink.x",
-  # "-C", "link-arg=-Tdefmt.x",
+  "-C", "link-arg=-Tdefmt.x",
   # "-C", "link-arg=-Tstlog.x",
 
   # if you run into problems with LLD switch to the GNU linker by commenting out
@@ -23,5 +23,5 @@ rustflags = [
 target = "thumbv7em-none-eabihf"
 
 [env]
-# DEFMT_LOG = "info"
+DEFMT_LOG = "info"
 CHIPSERIE = "STM32H750"

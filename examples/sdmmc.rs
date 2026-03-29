@@ -20,7 +20,7 @@
 use panic_probe as _;
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use stm32h7xx_hal::{
     pac,
     prelude::*,
@@ -58,7 +58,7 @@ fn main() -> ! {
         .pll1_q_ck(100.MHz()) // SDMMC clock source
         .freeze(pwrcfg, &dp.SYSCFG);
 
-    hprintln!("Integrated SDMMC Example Started");
+    defmt::info!("Integrated SDMMC Example Started");
 
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
     let gpiod = dp.GPIOD.split(ccdr.peripheral.GPIOD);
@@ -98,7 +98,7 @@ fn main() -> ! {
         .internal_pull_up(true)
         .speed(stm32h7xx_hal::gpio::Speed::VeryHigh);
 
-    hprintln!("Initializing SDMMC1 peripheral...");
+    defmt::info!("Initializing SDMMC1 peripheral...");
 
     let mut sdmmc: Sdmmc<pac::SDMMC1, SdCard> = dp.SDMMC1.sdmmc(
         (clk, cmd, d0, d1, d2, d3),
@@ -112,20 +112,20 @@ fn main() -> ! {
         match sdmmc.init(bus_frequency) {
             Ok(_) => break,
             Err(e) => {
-                hprintln!("Init error: {:?}", e);
+                defmt::info!("Init error: {:?}", defmt::Debug2Format(&e));
                 delay.delay_ms(1000u32);
             }
         }
-        hprintln!("Waiting for card...");
+        defmt::info!("Waiting for card...");
     }
 
-    hprintln!(
+    defmt::info!(
         "Card initialized! Capacity: {} bytes",
         sdmmc.card().unwrap().size()
     );
 
     // --- Raw Block Test ---
-    hprintln!("Running Raw Block Test...");
+    defmt::info!("Running Raw Block Test...");
     let test_block = 1000;
     let write_data = [0xA5; 512];
     sdmmc
@@ -136,16 +136,16 @@ fn main() -> ! {
         .read_block(test_block, &mut read_data)
         .expect("Block read failed");
     assert_eq!(read_data, write_data);
-    hprintln!("Raw Block Test Passed!");
+    defmt::info!("Raw Block Test Passed!");
 
     // --- Switch to Integrated Filesystem Adapter ---
-    hprintln!("Initializing Controller with integrated adapter...");
+    defmt::info!("Initializing Controller with integrated adapter...");
 
     // Convert to block device adapter (consumes raw sdmmc)
     // In HAL 0.16.0, this satisfies embedded-sdmmc 0.5.x traits.
     let mut controller = Controller::new(sdmmc.sdmmc_block_device(), DummyTimeSource);
 
-    hprintln!("Mounting Volume 0...");
+    defmt::info!("Mounting Volume 0...");
     let mut volume = controller
         .get_volume(VolumeIdx(0))
         .expect("Failed to get volume");
@@ -153,12 +153,12 @@ fn main() -> ! {
         .open_root_dir(&volume)
         .expect("Failed to open root dir");
 
-    hprintln!("Listing root directory:");
+    defmt::info!("Listing root directory:");
     controller
         .iterate_dir(&volume, &root_dir, |entry| {
-            hprintln!(
+            defmt::info!(
                 "  {}: {} ({} bytes)",
-                entry.name,
+                defmt::Debug2Format(&entry.name),
                 if entry.attributes.is_directory() {
                     "DIR"
                 } else {
@@ -169,7 +169,7 @@ fn main() -> ! {
         })
         .expect("Failed to iterate dir");
 
-    hprintln!("Creating /HELLO.TXT...");
+    defmt::info!("Creating /HELLO.TXT...");
     let mut file = controller
         .open_file_in_dir(
             &mut volume,
@@ -187,7 +187,7 @@ fn main() -> ! {
         .close_file(&volume, file)
         .expect("Failed to close file");
 
-    hprintln!("Integrated SDMMC Test Complete Success!");
+    defmt::info!("Integrated SDMMC Test Complete Success!");
 
     loop {
         cortex_m::asm::nop();

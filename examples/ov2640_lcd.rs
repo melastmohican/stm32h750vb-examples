@@ -29,7 +29,7 @@
 use panic_probe as _;
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embedded_graphics::{image::Image, pixelcolor::Rgb565, prelude::*};
 use embedded_hal_compat::eh1_0::delay::DelayNs;
@@ -77,7 +77,7 @@ fn main() -> ! {
             .modify(|_, w| w.mco1pre().bits(10).mco1().hsi());
     }
 
-    hprintln!("OV2640 DCMI to LCD Example");
+    defmt::info!("OV2640 DCMI to LCD Example");
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
@@ -164,39 +164,39 @@ fn main() -> ! {
 
     display.clear(Rgb565::BLACK).unwrap();
 
-    hprintln!("Before RED clear...");
+    defmt::info!("Before RED clear...");
     display.clear(Rgb565::RED).unwrap();
-    hprintln!("After RED clear - should be red now");
+    defmt::info!("After RED clear - should be red now");
     delay.delay_ms(2000u32);
 
-    hprintln!("Before GREEN clear...");
+    defmt::info!("Before GREEN clear...");
     display.clear(Rgb565::GREEN).unwrap();
-    hprintln!("After GREEN clear - should be green now");
+    defmt::info!("After GREEN clear - should be green now");
     delay.delay_ms(2000u32);
 
-    hprintln!("Before BLUE clear...");
+    defmt::info!("Before BLUE clear...");
     display.clear(Rgb565::BLUE).unwrap();
-    hprintln!("After BLUE clear - should be blue now");
+    defmt::info!("After BLUE clear - should be blue now");
     delay.delay_ms(2000u32);
 
     // 4. Initialize OV2640 Registers
     let ov2640_addr = 0x30;
 
-    hprintln!("Initializing OV2640 at 0x{:02X}...", ov2640_addr);
+    defmt::info!("Initializing OV2640 at 0x{:X}...", ov2640_addr);
     if i2c.write(ov2640_addr, &[0xFF, 0x01]).is_err() {
-        hprintln!("I2C Error: Reset Bank");
+        defmt::info!("I2C Error: Reset Bank");
     }
     if i2c.write(ov2640_addr, &[0x12, 0x80]).is_err() {
-        hprintln!("I2C Error: Reset COM7");
+        defmt::info!("I2C Error: Reset COM7");
     }
     delay.delay_ms(100);
 
     for &(reg, val) in OV2640_SLOW_REGS {
         if i2c.write(ov2640_addr, &[reg, val]).is_err() {
-            hprintln!("I2C Error at Reg 0x{:02X}", reg);
+            defmt::info!("I2C Error at Reg 0x{:X}", reg);
         }
     }
-    hprintln!("SLOW_REGS configured.");
+    defmt::info!("SLOW_REGS configured.");
     delay.delay_ms(30);
 
     for &(reg, val) in RGB565_REGS {
@@ -207,17 +207,17 @@ fn main() -> ! {
         i2c.write(ov2640_addr, &[reg, val]).ok();
     }
 
-    hprintln!("RGB565 and SVGA REGS configured.");
+    defmt::info!("RGB565 and SVGA REGS configured.");
 
     // Manual scaling for 160x120
-    hprintln!("Configuring Output ZMOW/ZMOH (QQVGA)...");
+    defmt::info!("Configuring Output ZMOW/ZMOH (QQVGA)...");
     i2c.write(ov2640_addr, &[0xFF, 0x00]).ok(); // Select DSP bank
     i2c.write(ov2640_addr, &[0x05, 0x01]).ok(); // Bypass DSP
     i2c.write(ov2640_addr, &[0x5A, 160 / 4]).ok(); // ZMOW ((w >> 2) & 0xFF)
     i2c.write(ov2640_addr, &[0x5B, 120 / 4]).ok(); // ZMOH ((h >> 2) & 0xFF)
     i2c.write(ov2640_addr, &[0x5C, 0x00]).ok(); // ZMHH (0)
     i2c.write(ov2640_addr, &[0x05, 0x00]).ok(); // Enable DSP
-    hprintln!("Scaling configuration complete.");
+    defmt::info!("Scaling configuration complete.");
 
     // Configure the MPU natively to make SRAM4 strictly NON-CACHEABLE and SHAREABLE.
     // This permanently ensures CPU/DMA coherence and eliminates unaligned Cache-line faulting.
@@ -252,7 +252,7 @@ fn main() -> ! {
     }
 
     // 5. Setup DCMI Pins (AF13) with VeryHigh speed
-    hprintln!("Configuring DCMI pins...");
+    defmt::info!("Configuring DCMI pins...");
     use stm32h7xx_hal::gpio::Speed::VeryHigh;
     let _d0 = gpioc.pc6.into_alternate::<13>().speed(VeryHigh);
     let _d1 = gpioc.pc7.into_alternate::<13>().speed(VeryHigh);
@@ -267,7 +267,7 @@ fn main() -> ! {
     let _pclk = gpioa.pa6.into_alternate::<13>().speed(VeryHigh);
 
     // 6. Setup DCMI Peripheral
-    hprintln!("Enabling DCMI clock...");
+    defmt::info!("Enabling DCMI clock...");
     unsafe {
         // Enable DCMI (bit 0) in AHB2
         (*pac::RCC::ptr())
@@ -279,7 +279,7 @@ fn main() -> ! {
             .modify(|r, w| w.bits(r.bits() | (1 << 29)));
     }
 
-    hprintln!("Configuring DCMI CR...");
+    defmt::info!("Configuring DCMI CR...");
     let dcmi = &dp.DCMI;
     dcmi.cr.write(|w| {
         w.cm()
@@ -293,7 +293,7 @@ fn main() -> ! {
     });
 
     // 7. Setup DMA (DMA1 Stream 0)
-    hprintln!("Enabling DMA1 clock...");
+    defmt::info!("Enabling DMA1 clock...");
     ccdr.peripheral.DMA1.enable().reset();
     unsafe {
         (*pac::RCC::ptr())
@@ -301,11 +301,11 @@ fn main() -> ! {
             .modify(|r, w| w.bits(r.bits() | 0x04));
     }
 
-    hprintln!("Configuring DMAMUX1...");
+    defmt::info!("Configuring DMAMUX1...");
     let dmamux1 = dp.DMAMUX1;
     dmamux1.ccr[0].write(|w| unsafe { w.dmareq_id().bits(75) });
 
-    hprintln!("Configuring DMA Stream 0 CR...");
+    defmt::info!("Configuring DMA Stream 0 CR...");
     let dma1 = dp.DMA1;
     let stream0 = &dma1.st[0];
     stream0.cr.write(|w| unsafe {
@@ -321,7 +321,7 @@ fn main() -> ! {
             .set_bit() // Circular
     });
 
-    hprintln!("Setting DMA Addresses...");
+    defmt::info!("Setting DMA Addresses...");
     stream0
         .par
         .write(|w| unsafe { w.pa().bits(dp.DCMI.dr.as_ptr() as u32) });
@@ -337,24 +337,24 @@ fn main() -> ! {
         FRAMEBUFFER.0.fill(0);
     }
 
-    hprintln!("Enabling DMA Stream...");
+    defmt::info!("Enabling DMA Stream...");
     stream0.cr.modify(|_, w| w.en().set_bit());
-    hprintln!("Enabling DCMI...");
+    defmt::info!("Enabling DCMI...");
     dcmi.cr.modify(|_, w| w.enable().set_bit());
-    hprintln!("Configuring DCMI Capture...");
+    defmt::info!("Configuring DCMI Capture...");
     dcmi.cr.modify(|_, w| w.capture().set_bit());
 
-    hprintln!("Calibrating Display with RED clear...");
+    defmt::info!("Calibrating Display with RED clear...");
     display.clear(Rgb565::RED).unwrap();
     delay.delay_ms(1000u32);
 
-    hprintln!("DCMI Capture Started, entering main loop");
+    defmt::info!("DCMI Capture Started, entering main loop");
 
     delay.delay_ms(200u32);
     unsafe {
-        hprintln!("FB addr: 0x{:08X}", FRAMEBUFFER.0.as_ptr() as u32);
-        hprintln!(
-            "FB[0..4]: {:08X} {:08X} {:08X} {:08X}",
+        defmt::info!("FB addr: 0x{:X}", FRAMEBUFFER.0.as_ptr() as u32);
+        defmt::info!(
+            "FB[0..4]: {:X} {:X} {:X} {:X}",
             FRAMEBUFFER.0[0],
             FRAMEBUFFER.0[1],
             FRAMEBUFFER.0[2],

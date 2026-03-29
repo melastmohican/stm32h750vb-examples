@@ -17,7 +17,7 @@
 use panic_probe as _;
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use stm32h7xx_hal::{delay::Delay, pac, prelude::*};
 
 #[entry]
@@ -34,7 +34,7 @@ fn main() -> ! {
     // - 400MHz System Clock
     let ccdr = rcc.sys_ck(400.MHz()).freeze(pwrcfg, &dp.SYSCFG);
 
-    hprintln!("Hardware RNG Blinky Example Started");
+    defmt::info!("Hardware RNG Blinky Example Started");
 
     // Initialize delay
     let mut delay = Delay::new(cp.SYST, ccdr.clocks);
@@ -45,7 +45,7 @@ fn main() -> ! {
     led.set_high(); // Turn off LED initially
 
     // Initialize True Random Number Generator
-    hprintln!("Initializing RNG peripheral...");
+    defmt::info!("Initializing RNG peripheral...");
     let mut rng = dp.RNG.constrain(ccdr.peripheral.RNG, &ccdr.clocks);
 
     loop {
@@ -63,7 +63,7 @@ fn main() -> ! {
                     (random_val % 1501) + 500
                 };
 
-                hprintln!(
+                defmt::info!(
                     "Random interval: {} ms {}",
                     period,
                     if period < 200 { "(burst)" } else { "(pause)" }
@@ -74,7 +74,7 @@ fn main() -> ! {
                 delay.delay_ms(period);
             }
             Err(e) => {
-                hprintln!("RNG error: {:?}", e);
+                defmt::info!("RNG error: {:?}", defmt::Debug2Format(&e));
                 // Simple fixed delay on error to allow retry
                 delay.delay_ms(1000u32);
             }

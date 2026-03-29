@@ -15,7 +15,7 @@
 #![no_std]
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use panic_probe as _;
 use stm32h7xx_hal::{pac, prelude::*};
 
@@ -43,7 +43,7 @@ fn main() -> ! {
     // Wait for floating pin to settle
     delay.delay_ms(5000_u16);
 
-    hprintln!("Button Poll Ready. Press K1!");
+    defmt::info!("Button Poll Ready. Press K1!");
 
     let mut was_pressed = button.is_low();
 

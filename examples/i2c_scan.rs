@@ -15,7 +15,7 @@ use panic_probe as _;
 
 use core::fmt::Debug;
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+use defmt_rtt as _;
 use stm32h7xx_hal::{pac, prelude::*};
 
 #[entry]
@@ -40,7 +40,7 @@ fn main() -> ! {
             .modify(|_, w| w.mco1pre().bits(10).mco1().hsi());
     }
 
-    hprintln!("Multi-Bus I2C Scanner (Conditional I2C3)");
+    defmt::info!("Multi-Bus I2C Scanner (Conditional I2C3)");
 
     // Initialize Delay for bus settling
     let mut delay = cortex_m::delay::Delay::new(cp.SYST, ccdr.clocks.sysclk().raw());
@@ -58,7 +58,7 @@ fn main() -> ! {
     let pa8 = gpioa.pa8.into_alternate::<0>();
 
     // --- Bus 1 Scan (PB8 / PB9) ---
-    hprintln!("\nScanning I2C1 (PB8/PB9) - Camera Port...");
+    defmt::info!("Scanning I2C1 (PB8/PB9) - Camera Port...");
     let scl1 = gpiob
         .pb8
         .into_alternate::<4>()
@@ -77,7 +77,7 @@ fn main() -> ! {
 
     // --- Conditional I2C3 Scan (PA8 / PC9) ---
     if devices1 == 0 {
-        hprintln!("\nNo Camera on I2C1. Switching PA8 to I2C3...");
+        defmt::info!("No Camera on I2C1. Switching PA8 to I2C3...");
 
         let scl3 = pa8
             .into_alternate::<4>()
@@ -95,11 +95,11 @@ fn main() -> ! {
             .i2c((scl3, sda3), 100.kHz(), ccdr.peripheral.I2C3, &ccdr.clocks);
         scan_bus(&mut i2c3, "I2C3");
     } else {
-        hprintln!("\nCamera Detected on I2C1. Keeping PA8 as XCLK (Skipping I2C3).");
+        defmt::info!("Camera Detected on I2C1. Keeping PA8 as XCLK (Skipping I2C3).");
     }
 
     // --- Bus 2 Scan (PB10 / PB11) ---
-    hprintln!("\nScanning I2C2 (PB10/PB11)...");
+    defmt::info!("Scanning I2C2 (PB10/PB11)...");
     let scl2 = gpiob
         .pb10
         .into_alternate::<4>()
@@ -117,7 +117,7 @@ fn main() -> ! {
     scan_bus(&mut i2c2, "I2C2");
 
     // --- Bus 4 Scan (PD12 / PD13) ---
-    hprintln!("\nScanning I2C4 (PD12/PD13)...");
+    defmt::info!("Scanning I2C4 (PD12/PD13)...");
     let scl4 = gpiod
         .pd12
         .into_alternate::<4>()
@@ -134,7 +134,7 @@ fn main() -> ! {
         .i2c((scl4, sda4), 100.kHz(), ccdr.peripheral.I2C4, &ccdr.clocks);
     scan_bus(&mut i2c4, "I2C4");
 
-    hprintln!("\nAll scans complete.");
+    defmt::info!("All scans complete.");
 
     loop {
         cortex_m::asm::wfi();
@@ -153,7 +153,7 @@ where
         let mut read_buf = [0u8; 1];
         match i2c.read(addr, &mut read_buf) {
             Ok(_) => {
-                hprintln!("  [{}] Device found at: 0x{:02X}", bus_label, addr);
+                defmt::info!("  [{}] Device found at: 0x{:X}", bus_label, addr);
                 devices_found += 1;
             }
             Err(_) => {
@@ -162,7 +162,7 @@ where
         }
     }
     if devices_found == 0 {
-        hprintln!("  [{}] No devices found.", bus_label);
+        defmt::info!("  [{}] No devices found.", bus_label);
     }
     devices_found
 }
