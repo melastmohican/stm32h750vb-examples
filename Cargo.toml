@@ -12,6 +12,7 @@ panic-probe = "0.3.2"
 embedded-hal = "1.0.0"
 embedded-hal-02 = { version = "0.2.7", package = "embedded-hal" }
 stm32h7xx-hal = { version = "0.16.0", features = ["stm32h750v", "sdmmc", "embedded-sdmmc", "sdmmc-fatfs"] }
+cortex-m-rtic = "1.1"
 
 [dev-dependencies]
 st7735-lcd = "0.10.0"
