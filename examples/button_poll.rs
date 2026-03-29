@@ -27,7 +27,7 @@ fn main() -> ! {
     let pwr = dp.PWR.constrain();
     let pwrcfg = pwr.freeze();
     let rcc = dp.RCC.constrain();
-    let ccdr = rcc.sys_ck(100.MHz()).freeze(pwrcfg, &dp.SYSCFG);
+    let ccdr = rcc.sys_ck(400.MHz()).freeze(pwrcfg, &dp.SYSCFG);
 
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
     let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
@@ -48,7 +48,7 @@ fn main() -> ! {
     let mut was_pressed = button.is_low();
 
     loop {
-        delay.delay_ms(50_u16);
+        delay.delay_ms(16_u16); // 60Hz polling
         let pressed = button.is_low();
 
         if pressed && !was_pressed {

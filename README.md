@@ -29,7 +29,7 @@ The examples demonstrate various features of the board and external peripherals.
 
 #### blinky (main)
 
-The entry-point firmware (`src/main.rs`) toggles the green User LED on the board.
+The entry-point firmware (`src/main.rs`) toggles the green User LED on the board at a fixed 1Hz rate.
 
 ```bash
 cargo run
@@ -39,6 +39,27 @@ cargo run
 
 - WeAct MiniSTM32H7xx Board
 - LED (Green): Managed via `PE3`
+
+#### button_poll
+
+A basic polling-based button example. It reads the state of the K1 User Button and sets the LED state accordingly.
+
+```bash
+cargo run --example button_poll
+```
+
+**Hardware:**
+
+- Button (K1): PC13
+- LED: PE3
+
+#### button_int (Interrupts)
+
+Demonstrates the use of **EXTI** (External Interrupts) to toggle the LED on a button press. It includes a 5-second "settle" delay for the floating PC13 pin.
+
+```bash
+cargo run --example button_int
+```
 
 ---
 
@@ -58,9 +79,13 @@ cargo run --example blinky_random
 - LED: PE3
 - MCU: STM32H750VBT6
 
-#### i2c_scan
+#### i2c_scan (Multi-Bus)
 
-Scans the **I2C1** bus (PB8/PB9) for connected devices. It iterates through all 7-bit addresses (0x01-0x7F) and reports any ACKs via semihosting.
+Scans multiple I2C buses for connected devices. It uses a **conditional logic** on **PA8**:
+1. Starts **PA8** as **MCO1** (16MHz Clock) to wake up the camera on I2C1.
+2. Scans **I2C1** (PB8/PB9).
+3. If no device is found on I2C1, it reconfigures PA8 as **I2C3_SCL** and scans **I2C3** (PA8/PC9).
+4. Also scans **I2C2** (PB10/PB11) and **I2C4** (PD12/PD13).
 
 ```bash
 cargo run --example i2c_scan
@@ -68,9 +93,8 @@ cargo run --example i2c_scan
 
 **Hardware:**
 
-- Peripheral: I2C1 (Internal/Extension)
-- Pins: PB8 (SCL), PB9 (SDA)
-- MCU: STM32H750VBT6
+- Peripherals: I2C1, I2C2, I2C3 (Opt), I2C4
+- Pins: Varied (defined in source)
 
 ---
 
@@ -132,6 +156,22 @@ cargo run --example mipidsi
 - Display: ST7735 (160x80)
 - Driver: `mipidsi` crate
 
+#### dino_game (Chrome Dino)
+
+A playable "Chrome Dino" clone optimized for the STM32H750. It features:
+- **60 FPS** smooth gameplay.
+- **Fixed-point physics** for precise movement.
+- **Optimized SPI rendering** using `fill_contiguous`.
+
+```bash
+cargo run --example dino_game
+```
+
+**Controls:**
+
+- **K1 (PC13)**: Jump
+- **PA0**: Jump (External button to GND)
+
 ---
 
 ### Storage Examples
@@ -166,10 +206,18 @@ cargo run --example usb_serial
 
 #### usb_rtic_serial
 
-An interrupt-driven USB echo server built with the **RTIC** framework. It uses an idle-polling pattern for maximum reliability on the H750VB.
+An interrupt-driven USB echo server built with the **RTIC** framework.
 
 ```bash
 cargo run --example usb_rtic_serial
+```
+
+#### rtic_button
+
+Demonstrates handling the User Button (K1) via the **RTIC** framework tasks.
+
+```bash
+cargo run --example rtic_button
 ```
 
 #### usb_serial_lcd (Terminal)
@@ -329,3 +377,5 @@ Special build profiles are used to ensure the binaries fit in the 128KB internal
 - [Zephyr OV2640 Module Documentation](https://docs.zephyrproject.org/latest/boards/shields/weact_ov2640_cam_module/doc/index.html)
 - [NuttX WeAct STM32H743 Documentation](https://nuttx.apache.org/docs/latest/platforms/arm/stm32h7/boards/weact-stm32h743/index.html)
 - [OV2640 Datasheet](https://www.uctronics.com/download/cam_module/OV2640DS.pdf)
+- [stm32h7xx-hal examples](https://github.com/stm32-rs/stm32h7xx-hal/tree/master/examples)
+- [Dinosaur Game](https://en.wikipedia.org/wiki/Dinosaur_Game)

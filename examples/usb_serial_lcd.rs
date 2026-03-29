@@ -1,11 +1,11 @@
 //! USB Serial to ST7735 LCD Bridge (USB Terminal)
 //!
 //! Adapted for WeAct MiniSTM32H750VB.
-//! Ported to defmt/RTT for high-speed logging.
+//! Uses mipidsi 0.8.0 for the display driver.
 //!
 //! ### Implementation Details:
 //! 1. **USB2 (OTG2_HS)**: CDC-ACM serial on PA11/PA12 (Alternate 10).
-//! 2. **SPI4 LCD**: ST7735 display on Port E pins.
+//! 2. **SPI4 LCD**: ST7735 display on Port E pins using mipidsi.
 //! 3. **Logic**: Displays received USB text on the LCD. Clears screen when full.
 
 #![no_main]
@@ -16,15 +16,19 @@ use panic_probe as _;
 
 use cortex_m_rt::entry;
 use defmt_rtt as _;
+use display_interface_spi::SPIInterface;
 use embedded_graphics::mono_font::ascii::FONT_6X10;
 use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::text::Text;
 use embedded_hal_bus::spi::ExclusiveDevice;
-use embedded_hal_compat::eh1_0::digital::OutputPin;
 use embedded_hal_compat::ForwardCompat;
-use st7735_lcd::{Orientation, ST7735};
+use mipidsi::{
+    models::ST7735s,
+    options::{ColorInversion, ColorOrder, Orientation, Rotation},
+    Builder,
+};
 use stm32h7xx_hal::rcc::rec::UsbClkSel;
 use stm32h7xx_hal::spi::NoMiso;
 use stm32h7xx_hal::usb_hs::{UsbBus, USB2};
@@ -63,7 +67,7 @@ where
                 continue;
             }
 
-            // Draw single char (embedded-graphics doesn't wrap easily, so we do it manually)
+            // Draw single char
             let mut s = [0u8; 4];
             let s_str = c.encode_utf8(&mut s);
 
@@ -101,21 +105,21 @@ fn main() -> ! {
     let rcc = dp.RCC.constrain();
     let mut ccdr = rcc
         .sys_ck(400.MHz())
-        .pll1_q_ck(100.MHz()) // SPI4 clock source
+        .pll1_q_ck(100.MHz())
         .freeze(pwrcfg, &dp.SYSCFG);
 
     // 48MHz CLOCK for USB from internal HSI48
     let _ = ccdr.clocks.hsi48_ck().expect("HSI48 must run");
     ccdr.peripheral.kernel_usb_clk_mux(UsbClkSel::Hsi48);
 
-    // Enable the USB voltage regulator (Internal 3.3V power for PHY)
+    // Enable the USB voltage regulator
     unsafe {
         let pwr = &*pac::PWR::ptr();
         pwr.cr3.modify(|_, w| w.usb33den().set_bit());
         while pwr.cr3.read().usb33rdy().bit_is_clear() {}
     }
 
-    defmt::info!("USB Serial to LCD Example Started");
+    defmt::info!("USB Serial to LCD Example Started (mipidsi)");
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
     let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
@@ -126,8 +130,8 @@ fn main() -> ! {
     let rst = gpioe.pe15.into_push_pull_output().forward();
     let dc = gpioe.pe13.into_push_pull_output().forward();
     let cs = gpioe.pe11.into_push_pull_output().forward();
-    let mut bl = gpioe.pe10.into_push_pull_output().forward();
-    bl.set_low().ok(); // Enable Backlight (Active LOW)
+    let mut bl = gpioe.pe10.into_push_pull_output();
+    bl.set_low(); // Enable Backlight (Active LOW)
 
     let spi_peripheral = dp
         .SPI4
@@ -141,14 +145,19 @@ fn main() -> ! {
         .forward();
 
     let spi_dev = ExclusiveDevice::new_no_delay(spi_peripheral, cs).unwrap();
+    let di = SPIInterface::new(spi_dev, dc);
     let mut delay = cortex_m::delay::Delay::new(cp.SYST, ccdr.clocks.sysclk().raw()).forward();
 
-    let mut display = ST7735::new(spi_dev, dc, rst, false, true, 160, 80);
-    display.init(&mut delay).unwrap();
-    display.set_offset(1, 26);
-    display
-        .set_orientation(&Orientation::LandscapeSwapped)
+    let mut display = Builder::new(ST7735s, di)
+        .reset_pin(rst)
+        .color_order(ColorOrder::Bgr)
+        .invert_colors(ColorInversion::Inverted)
+        .display_size(80, 160)
+        .display_offset(26, 1)
+        .orientation(Orientation::new().rotate(Rotation::Deg270))
+        .init(&mut delay)
         .unwrap();
+
     display.clear(Rgb565::BLACK).unwrap();
 
     let mut terminal = LcdTerminal::new(display);
