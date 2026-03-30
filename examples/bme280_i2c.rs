@@ -63,12 +63,9 @@ fn main() -> ! {
         .set_open_drain()
         .internal_pull_up(true);
 
-    let i2c = dp.I2C2.i2c(
-        (scl, sda),
-        100.kHz(),
-        ccdr.peripheral.I2C2,
-        &ccdr.clocks,
-    );
+    let i2c = dp
+        .I2C2
+        .i2c((scl, sda), 100.kHz(), ccdr.peripheral.I2C2, &ccdr.clocks);
 
     // Wrap I2C for EH 1.0 and share via RefCell
     let i2c_bus = RefCell::new(I2cEh1(i2c));
@@ -93,7 +90,7 @@ fn main() -> ! {
 
     // --- 2. BME280 Initialization with Fallback ---
     info!("Initializing BME280...");
-    
+
     // Try 0x77 first (Standard Adafruit/WeAct address)
     let mut bme280 = BME280::new_secondary(RefCellDevice::new(&i2c_bus));
     let mut initialized = false;
@@ -106,7 +103,7 @@ fn main() -> ! {
         Err(e) => {
             warn!("BME280 not found at 0x77: {:?}", defmt::Debug2Format(&e));
             info!("Trying fallback address 0x76...");
-            
+
             // Try 0x76 (SDO connected to GND)
             let mut bme280_alt = BME280::new_primary(RefCellDevice::new(&i2c_bus));
             match bme280_alt.init(&mut delay_eh1) {
@@ -142,7 +139,10 @@ fn main() -> ! {
                 );
             }
             Err(e) => {
-                error!("Failed to read from BME280 sensor: {:?}", defmt::Debug2Format(&e));
+                error!(
+                    "Failed to read from BME280 sensor: {:?}",
+                    defmt::Debug2Format(&e)
+                );
             }
         }
 

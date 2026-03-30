@@ -152,7 +152,7 @@ cargo run --example mcutemp
 
 ### SPI Display Examples
 
-These examples use the **SPI4** peripheral on `GPIOE` to drive small TFT displays. Due to the limited 128KB internal FLASH, these examples are optimized for size.
+These examples demonstrate driving TFT displays using the **SPI4** peripheral (built-in LCD) or the **SPI2** peripheral (external GC9A01 display). Due to the limited 128KB internal FLASH, these examples are optimized for size.
 
 #### ov2640_lcd
 
@@ -176,6 +176,22 @@ cargo run --example mipidsi
 
 - Display: ST7735 (160x80)
 - Driver: `mipidsi` crate
+
+#### gc9a01_spi
+
+Renders images on a 240x240 **round** GC9A01 display using the modern `mipidsi` driver.
+
+```bash
+cargo run --example gc9a01_spi
+```
+
+#### gc9a01_spi_text
+
+Demonstrates text rendering, shapes (circles), and clock-like radiating lines on the round GC9A01 display.
+
+```bash
+cargo run --example gc9a01_spi_text
+```
 
 #### dino_game (Chrome Dino)
 
@@ -333,6 +349,15 @@ On Cortex-M7 (STM32H7), DMA and the CPU Cache compete for data consistency.
 - **Cause**: OV2640 Register `0xDA` (Format Control).
 - **Fix**: Ensure `0xDA` is set to `0x08` for RGB565. Values like `0x01` or `0x02` force YUV/RAW output.
 
+### SPI1/2/3 Kernel Clock (PLL1_Q)
+
+- **Issue**: Attempting to initialize SPI1, SPI2, or SPI3 without enabling `PLL1_Q` causes an immediate panic.
+- **Solution**: These peripherals (unlike SPI4/5) require an explicit kernel clock source. Ensure `.pll1_q_ck()` is called in your RCC configuration:
+
+```rust
+let ccdr = rcc.sys_ck(400.MHz()).pll1_q_ck(48.MHz()).freeze(pwrcfg, &dp.SYSCFG);
+```
+
 ---
 
 ### Shared Wiring (ST7735 Display)
@@ -349,6 +374,21 @@ Both SPI display examples use the following pin mapping for **SPI4**:
 | DC         | PE13          | Data/Command         |
 | RES (RST)  | PE15          | Reset                |
 | LED        | PE10          | Backlight (optional) |
+
+### External GC9A01 Wiring (SPI2)
+
+The `gc9a01` examples use **SPI2** to avoid conflicts with the built-in LCD:
+
+| GC9A01 LCD | STM32H750 Pin | Note                 |
+| :--------- | :------------ | :------------------- |
+| VCC        | 3.3V          |                      |
+| GND        | GND           |                      |
+| SCL (SCK)  | **PB13**      | SPI2 SCK (AF5)       |
+| SDA (MOSI) | **PB15**      | SPI2 MOSI (AF5)      |
+| CS         | **PB12**      | Chip Select          |
+| DC         | **PD11**      | Data/Command         |
+| RES (RST)  | **PD10**      | Reset                |
+| BLK        | **PC1**       | Backlight (optional) |
 
 ### Camera Wiring (OV2640 DVP)
 
