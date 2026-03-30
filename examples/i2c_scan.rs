@@ -145,7 +145,7 @@ fn main() -> ! {
 /// Returns the number of devices found.
 fn scan_bus<I2C, E>(i2c: &mut I2C, bus_label: &str) -> usize
 where
-    I2C: embedded_hal_02::blocking::i2c::Read<Error = E>,
+    I2C: embedded_hal_compat::eh0_2::blocking::i2c::Read<Error = E>,
     E: Debug,
 {
     let mut devices_found = 0;

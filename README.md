@@ -91,10 +91,44 @@ Scans multiple I2C buses for connected devices. It uses a **conditional logic** 
 cargo run --example i2c_scan
 ```
 
+#### bme280_i2c
+
+Standalone BME280 sensor example. Reads temperature, humidity, and pressure and logs it to the terminal.
+
+```bash
+cargo run --example bme280_i2c
+```
+
+#### ssd1306
+
+Standalone SSD1306 OLED example. Displays a 1-bit black and white image (`rustbw.bmp`).
+
+```bash
+cargo run --example ssd1306
+```
+
+#### ssd1306_text
+
+Standalone SSD1306 OLED example. Demonstrates drawing text, lines, rectangles, and circles.
+
+```bash
+cargo run --example ssd1306_text
+```
+
+#### bme280_ssd1306_i2c (Combined)
+
+A combined environmental sensor and display example. It reads data from a **BME280** and renders it to an **SSD1306** OLED.
+
+```bash
+cargo run --example bme280_ssd1306_i2c
+```
+
 **Hardware:**
 
-- Peripherals: I2C1, I2C2, I2C3 (Opt), I2C4
-- Pins: Varied (defined in source)
+- Bus: I2C2 (Shared via `embedded-hal-bus`)
+- Pins: PB10 (SCL), PB11 (SDA)
+- Sensor: BME280 (0x77/0x76)
+- Display: SSD1306 (0x3C/0x3D)
 
 ---
 
@@ -119,19 +153,6 @@ cargo run --example mcutemp
 ### SPI Display Examples
 
 These examples use the **SPI4** peripheral on `GPIOE` to drive small TFT displays. Due to the limited 128KB internal FLASH, these examples are optimized for size.
-
-#### st7735_lcd
-
-Displays a Ferrris logo and the Rust logo on a 1.8" or 0.96" ST7735-based LCD.
-
-```bash
-cargo run --example st7735_lcd
-```
-
-**Hardware:**
-
-- Display: ST7735 (160x80 or 128x160)
-- Driver: `st7735-lcd` crate
 
 #### ov2640_lcd
 
@@ -255,7 +276,14 @@ cargo run --example usb_serial_lcd
 
 ## Implementation Architecture
 
-### 1. Memory Coherency (MPU & SRAM4)
+### 1. embedded-hal v1.0 Compatibility
+
+Since `stm32h7xx-hal` v0.16.x currently supports the older **embedded-hal v0.2.x** traits, this project includes a minimal compatibility layer in `src/lib.rs`.
+
+- **Pattern**: Wraps HAL types in a `compat` struct implemented for EH v1.0.
+- **Benefit**: Allows the use of modern, high-quality sensor crates (like `bme280` v0.5 and `ssd1306` v0.9) that require the new trait standard without waiting for upstream HAL updates.
+
+### 2. Memory Coherency (MPU & SRAM4)
 
 On Cortex-M7 (STM32H7), DMA and the CPU Cache compete for data consistency.
 
@@ -272,6 +300,14 @@ On Cortex-M7 (STM32H7), DMA and the CPU Cache compete for data consistency.
 
 - **Problem**: Fixed-loop delays (e.g., `delay_ms(16)`) drift relative to the camera's frame rate, causing tearing.
 - **Solution**: Explicitly poll the DCMI `frame_ris` bit. Clear it via `icr` only after the frame is fully processed.
+
+## Design Decisions
+
+### 1. SPI Display Driver Standardization
+
+- **Decision**: Standardize all SPI display examples on the **`mipidsi`** crate.
+- **Rationale**: The `mipidsi` crate is more modern, actively maintained, and provides better support for various rotations and color formats compared to the older `st7735-lcd` crate.
+- **Result**: The `st7735_lcd` example was removed as it became redundant once all logic was migrated to use `mipidsi`.
 
 ## Hardware Gotchas & Troubleshooting
 
