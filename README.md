@@ -83,8 +83,11 @@ cargo run --example blinky_random
 
 Scans multiple I2C buses for connected devices. It uses a **conditional logic** on **PA8**:
 1. Starts **PA8** as **MCO1** (16MHz Clock) to wake up the camera on I2C1.
+
 2. Scans **I2C1** (PB8/PB9).
+
 3. If no device is found on I2C1, it reconfigures PA8 as **I2C3_SCL** and scans **I2C3** (PA8/PC9).
+
 4. Also scans **I2C2** (PB10/PB11) and **I2C4** (PD12/PD13).
 
 ```bash
@@ -192,6 +195,23 @@ Demonstrates text rendering, shapes (circles), and clock-like radiating lines on
 ```bash
 cargo run --example gc9a01_spi_text
 ```
+
+#### zermatt_snow
+
+Renders a high-quality 320x240 image of Zermatt with dynamic falling snow physics. This example demonstrates:
+- **External Asset Loading**: Loads a 225KB BMP from a MicroSD card to bypass the 128KB internal FLASH limit.
+- **AXISRAM Usage**: Buffers the large image in the 512KB AXISRAM (D1 Domain) for fast access.
+- **Hardware RNG**: Uses the internal RNG for authentic snowflake drift and generation.
+
+```bash
+cargo run --example zermatt_snow
+```
+
+**Hardware:**
+
+- **Display**: Adafruit 2.2" TFT SPI Display (Product 1480).
+- **Storage**: Onboard MicroSD slot (requires `ZERMATT.BMP` on a FAT32 card).
+- **Bus**: SPI2 (Display) + SDMMC1 (Storage).
 
 #### dino_game (Chrome Dino)
 
@@ -304,6 +324,7 @@ Since `stm32h7xx-hal` v0.16.x currently supports the older **embedded-hal v0.2.x
 On Cortex-M7 (STM32H7), DMA and the CPU Cache compete for data consistency.
 
 - **Pattern**: Configure the MPU to mark the D2/D3 SRAM regions (where DMA resides) as **Non-Cacheable** and **Shareable**.
+
 - **Benefit**: Eliminates the need for manual `invalidate_dcache` calls which can cause `Imprecise BusFaults` if addresses are not 32-byte aligned.
 
 ### 2. DCMI & DMA Configuration
@@ -387,8 +408,9 @@ The `gc9a01` examples use **SPI2** to avoid conflicts with the built-in LCD:
 | SDA (MOSI) | **PB15**      | SPI2 MOSI (AF5)      |
 | CS         | **PB12**      | Chip Select          |
 | DC         | **PD11**      | Data/Command         |
-| RES (RST)  | **PD10**      | Reset                |
-| BLK        | **PC1**       | Backlight (optional) |
+| RESET      | **PD10**      | Reset                |
+
+### Hardware RNG Support
 
 ### Camera Wiring (OV2640 DVP)
 
