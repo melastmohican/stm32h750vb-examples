@@ -102,6 +102,14 @@ Standalone BME280 sensor example. Reads temperature, humidity, and pressure and 
 cargo run --example bme280_i2c
 ```
 
+#### pms5003
+
+Standalone PMS5003 air quality sensor example. Reads PM1.0, PM2.5, and PM10 concentrations. It uses a **Drain & Hunt** stability strategy to handle UART synchronization on the high-speed H7.
+
+```bash
+cargo run --example pms5003
+```
+
 #### ssd1306
 
 Standalone SSD1306 OLED example. Displays a 1-bit black and white image (`rustbw.bmp`).
@@ -409,6 +417,17 @@ The `gc9a01` examples use **SPI2** to avoid conflicts with the built-in LCD:
 | CS         | **PB12**      | Chip Select          |
 | DC         | **PD11**      | Data/Command         |
 | RESET      | **PD10**      | Reset                |
+
+### Sensor Wiring (PMS5003)
+
+The `pms5003` example uses **USART1**:
+
+| PMS5003 Pin | STM32H7 Pin | Note                 |
+| :---------- | :---------- | :------------------- |
+| VCC         | 5V          | Required for fan     |
+| GND         | GND         |                      |
+| TXD         | **PA10**    | Sensor TX -> MCU RX  |
+| RXD         | **PA9**     | Sensor RX -> MCU TX  |
 
 ### Hardware RNG Support
 
